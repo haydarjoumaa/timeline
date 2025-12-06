@@ -1,4 +1,5 @@
 <template>
+  <!-- Static table for dates/notes aligned with the timeline rows -->
   <div class="left-panel">
     <div class="panel-header-left">
       <div class="cell cell-date">Date</div>

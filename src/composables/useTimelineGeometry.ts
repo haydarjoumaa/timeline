@@ -46,9 +46,11 @@ type GeometryOptions = {
  * Centralizes geometry helpers so multiple components can share positioning math.
  */
 export function useTimelineGeometry(options: GeometryOptions) {
+  // Compute y center for a given row index, including header offset
   const rowY = (rowIndex: number) =>
     rowIndex * options.rowHeight + options.rowHeight / 2 + 21 + options.laneTopOffset
 
+  // Position a vertex relative to the lane origin (applies different offsets for HTML vs circle)
   const vertexYRelative = (vertex: Vertex) => {
     const idx = options.rowIndexById()[vertex.rowId]
     const base = rowY(idx)
@@ -56,6 +58,7 @@ export function useTimelineGeometry(options: GeometryOptions) {
     return base - options.laneTopOffset - offset
   }
 
+  // Size of a vertex depending on rendering mode
   const vertexSize = (vertex: Vertex) =>
     vertex.useHtml
       ? { width: options.foreignNodeWidth, height: options.foreignNodeHeight }
@@ -63,6 +66,7 @@ export function useTimelineGeometry(options: GeometryOptions) {
 
   const nodeTranslate = (vertex: Vertex) => `translate(0, ${vertexYRelative(vertex)})`
 
+  // Global SVG coordinates for a vertex
   const vertexGlobalPosition = (laneId: string, vertexId: string) => {
     const lane = options.lanesWithLayout().find((l) => l.id === laneId)
     if (!lane) return null
@@ -99,6 +103,7 @@ export function useTimelineGeometry(options: GeometryOptions) {
       .filter(Boolean) as PeriodLayout[],
   )
 
+  // Period rectangles within a single lane (between adjacent vertices)
   const getLanePeriods = (lane: Lane) => {
     const verts = lane.filters?.vertices ?? []
     const sorted = [...verts].sort(

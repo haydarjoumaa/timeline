@@ -6,7 +6,7 @@ import type { Lane, Period, Vertex } from './useTimelineGeometry'
  * Keeps App.vue lean and provides a single source of truth for layout constants.
  */
 export function useTimelineState() {
-  // Layout constants
+  // Layout constants (tweak here to change the entire view)
   const rowHeight = 50
   const laneTopOffset = 30
   const laneSpacing = 140
@@ -24,6 +24,7 @@ export function useTimelineState() {
     { id: 'R4', date: '2024-01-15', note: 'Meeting' },
   ])
 
+  // Map rowId -> index for quick lookups
   const rowIndexById = computed(() => {
     const map: Record<string, number> = {}
     rows.value.forEach((row, index) => {
@@ -60,14 +61,17 @@ export function useTimelineState() {
     },
   ])
 
+  // Track current x position per lane (mutated by drag)
   const lanePositions = ref<Record<string, number>>({})
 
   const laneBaseX = (lane: Lane, idx: number) => (lane.order ?? idx + 1) * laneSpacing
 
+  // Seed initial lane positions from order/index
   lanes.value.forEach((lane, idx) => {
     lanePositions.value[lane.id] = laneBaseX(lane, idx)
   })
 
+  // Attach x layout to each lane for rendering
   const lanesWithLayout = computed(() =>
     lanes.value.map((lane, idx) => ({
       ...lane,
@@ -126,6 +130,7 @@ export function useTimelineState() {
     lanePositions.value = { ...lanePositions.value, [`lane-${idx}`]: newX }
   }
 
+  // Apply drag delta to the lane's x position
   const handleLaneDrag = (payload: { laneId: string; deltaX: number }) => {
     const lane = lanes.value.find((l) => l.id === payload.laneId)
     if (!lane) return

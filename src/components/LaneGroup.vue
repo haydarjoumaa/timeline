@@ -1,4 +1,5 @@
 <template>
+  <!-- Single lane: title, vertical line, periods, and nodes -->
   <g class="lane-group" :data-lane-id="lane.id" :transform="`translate(${lane.x}, ${laneTopOffset})`">
     <text x="0" y="-15" text-anchor="middle" fill="#333" font-size="12" font-weight="600">
       {{ lane.name }}

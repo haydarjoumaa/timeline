@@ -35,6 +35,7 @@ import {
   type Vertex,
 } from '../composables/useTimelineGeometry'
 
+// Display-only props for the timeline; data and sizing come from the parent
 const props = defineProps<{
   rows: Row[]
   rowIndexById: Record<string, number>
@@ -71,12 +72,14 @@ const { rowY, nodeTranslate, periodLayouts, getLanePeriods } = useTimelineGeomet
   lanesWithLayout: () => props.lanesWithLayout,
 })
 
+// Re-apply drag behavior to lane groups (after mount or DOM changes)
 const applyDragToLanes = () => {
   if (!svgRef.value || !laneDragBehavior) return
   const svg = d3.select<SVGSVGElement, unknown>(svgRef.value)
   svg.selectAll<SVGGElement, unknown>('g.lane-group').call(laneDragBehavior as any)
 }
 
+// D3 drag setup; emits lane-drag for state mutation upstream
 const setupDrag = () => {
   laneDragBehavior = d3
     .drag<SVGGElement, unknown>()

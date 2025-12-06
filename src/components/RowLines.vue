@@ -1,4 +1,5 @@
 <template>
+  <!-- Horizontal guides lining up with each data row -->
   <g class="rows-bg">
     <line
       v-for="(row, rowIndex) in rows"

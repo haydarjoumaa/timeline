@@ -1,4 +1,5 @@
 <template>
+  <!-- Top-level layout: toolbar + split left/right panels -->
   <div class="timeline-wrapper">
     <div class="toolbar">
       <button @click="addRowInMiddle">Add row in middle</button>
