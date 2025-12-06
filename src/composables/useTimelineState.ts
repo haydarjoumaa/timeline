@@ -112,8 +112,12 @@ export function useTimelineState() {
   const laneColors = ['#3498db', '#9b59b6', '#f1c40f', '#e67e22', '#1abc9c']
 
   const addLane = () => {
-    const lastLane = lanesWithLayout.value[lanesWithLayout.value.length - 1]
-    const newX = lastLane ? lastLane.x + laneSpacing : laneSpacing
+    // Place new lane just after the rightmost current lane (respects drag position)
+    const maxX =
+      lanesWithLayout.value.length === 0
+        ? 0
+        : Math.max(...lanesWithLayout.value.map((lane) => lane.x))
+    const newX = maxX + laneSpacing
     const idx = nextLaneIndex.value++
     const color = laneColors[(idx - 1) % laneColors.length]
 
