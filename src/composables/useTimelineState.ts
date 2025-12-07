@@ -10,7 +10,7 @@ export function useTimelineState() {
   const rowHeight = 50
   const laneTopOffset = 30
   const laneSpacing = 140
-  const svgWidth = 800
+  const minSvgWidth = 800
   const nodeRadius = 8
   const foreignNodeWidth = 90
   const foreignNodeHeight = 36
@@ -78,6 +78,13 @@ export function useTimelineState() {
       x: lanePositions.value[lane.id] ?? laneBaseX(lane, idx),
     })),
   )
+
+  const svgWidth = computed(() => {
+    const margin = 160
+    const laneXs = Object.values(lanePositions.value)
+    const maxLaneX = laneXs.length ? Math.max(...laneXs) : minSvgWidth
+    return Math.max(minSvgWidth, maxLaneX + margin)
+  })
 
   // Periods (can reference nodes on any lane)
   const periods = ref<Period[]>([
