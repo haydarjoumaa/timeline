@@ -1,19 +1,13 @@
 <template>
-  <svg ref="svgRef" :width="svgWidth" :height="svgHeight">
-    <g :transform="`translate(0, 0)`">
-      <RowLines :rows="rows" :svgWidth="svgWidth" :rowY="rowY" />
-
-      <GlobalPeriods :periodLayouts="periodLayouts" />
+  <svg ref="svgRef" :width="svgWidth * zoomLevel" :height="svgHeight * zoomLevel">
+    <g :transform="`scale(${zoomLevel}, ${zoomLevel})`">
+      <RowLines :rows="rows" :svgWidth="svgWidth" :rowY="rowLineY" />
 
       <LaneGroup
         v-for="lane in lanesWithLayout"
         :key="lane.id"
         :lane="lane"
-        :laneTopOffset="laneTopOffset"
         :svgHeight="svgHeight"
-        :nodeRadius="nodeRadius"
-        :foreignNodeWidth="foreignNodeWidth"
-        :foreignNodeHeight="foreignNodeHeight"
         :lanePeriods="getLanePeriods(lane)"
         :nodeTranslate="nodeTranslate"
       />
@@ -25,74 +19,41 @@
 import { onMounted, ref, watch, nextTick } from 'vue'
 import * as d3 from 'd3'
 import RowLines from './RowLines.vue'
-import GlobalPeriods from './GlobalPeriods.vue'
 import LaneGroup from './LaneGroup.vue'
-import {
-  useTimelineGeometry,
-  type Row,
-  type LaneWithLayout,
-  type Period,
-  type Vertex,
-} from '../composables/useTimelineGeometry'
+import { useTimelineData } from '@/composables/useTimelineData'
+import { useTimelineGeometry } from '@/composables/useTimelineGeometry'
+import { useTimelineZoom } from '@/composables/useTimelineZoom'
 
-// Display-only props for the timeline; data and sizing come from the parent
-const props = defineProps<{
-  rows: Row[]
-  rowIndexById: Record<string, number>
-  rowHeight: number
-  laneTopOffset: number
-  lanesWithLayout: LaneWithLayout[]
-  svgWidth: number
-  svgHeight: number
-  nodeRadius: number
-  foreignNodeWidth: number
-  foreignNodeHeight: number
-  periods: Period[]
-  periodWidth: number
-}>()
+const { svgHeight, svgWidth, rows, lanesWithLayout, handleLaneDrag } = useTimelineData()
+const { zoomLevel } = useTimelineZoom()
 
-const emit = defineEmits<{
-  (e: 'lane-drag', payload: { laneId: string; deltaX: number }): void
-}>()
+// Shared geometry helpers are centralized in a composable
+const { rowLineY, nodeTranslate, getLanePeriods } = useTimelineGeometry()
 
 const svgRef = ref<SVGSVGElement | null>(null)
 let laneDragBehavior: d3.DragBehavior<SVGGElement, unknown, unknown> | null = null
 
-// Shared geometry helpers are centralized in a composable
-const { rowY, nodeTranslate, periodLayouts, getLanePeriods } = useTimelineGeometry({
-  rows: () => props.rows,
-  rowIndexById: () => props.rowIndexById,
-  rowHeight: props.rowHeight,
-  laneTopOffset: props.laneTopOffset,
-  nodeRadius: props.nodeRadius,
-  foreignNodeWidth: props.foreignNodeWidth,
-  foreignNodeHeight: props.foreignNodeHeight,
-  periodWidth: props.periodWidth,
-  periods: () => props.periods,
-  lanesWithLayout: () => props.lanesWithLayout,
-})
-
 // Re-apply drag behavior to lane groups (after mount or DOM changes)
 const applyDragToLanes = () => {
   if (!svgRef.value || !laneDragBehavior) return
-  const svg = d3.select<SVGSVGElement, unknown>(svgRef.value)
-  svg.selectAll<SVGGElement, unknown>('g.lane-group').call(laneDragBehavior as any)
+  d3.select<SVGSVGElement, unknown>(svgRef.value)
+    .selectAll<SVGGElement, unknown>('g.lane-group')
+    .call(laneDragBehavior)
 }
 
-// D3 drag setup; emits lane-drag for state mutation upstream
+// D3 drag setup; deltas are divided by zoom so lanes follow the cursor
 const setupDrag = () => {
   laneDragBehavior = d3
     .drag<SVGGElement, unknown>()
-    // Ignore drag when clicking inside a foreignObject node
+    // Ignore drag when clicking inside interactive node content
     .filter((event) => {
       const target = event.target as Element | null
       return !(target && typeof target.closest === 'function' && target.closest('.node-foreign'))
     })
     .on('drag', function (event) {
-      const el = this as SVGGElement
-      const laneId = el.dataset.laneId
+      const laneId = (this as SVGGElement).dataset.laneId
       if (!laneId) return
-      emit('lane-drag', { laneId, deltaX: event.dx })
+      handleLaneDrag({ laneId, deltaX: event.dx / zoomLevel.value })
     })
 
   applyDragToLanes()
@@ -103,7 +64,7 @@ onMounted(() => {
 })
 
 watch(
-  () => props.lanesWithLayout.map((l) => l.id).join(','),
+  () => lanesWithLayout.value.map((l) => l.id).join(','),
   async () => {
     await nextTick()
     applyDragToLanes()

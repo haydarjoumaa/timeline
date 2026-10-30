@@ -1,62 +1,101 @@
 <template>
   <!-- Single lane: title, vertical line, periods, and nodes -->
   <g class="lane-group" :data-lane-id="lane.id" :transform="`translate(${lane.x}, ${laneTopOffset})`">
-    <text x="0" y="-15" text-anchor="middle" fill="#333" font-size="12" font-weight="600">
-      {{ lane.name }}
-    </text>
+    <foreignObject
+      :x="laneTitleXOffset"
+      :y="-laneTopOffset"
+      :width="laneTitleWidth"
+      :height="laneTitleHeight"
+    >
+      <div xmlns="http://www.w3.org/1999/xhtml">
+        <LaneTitle :lane="lane" />
+      </div>
+    </foreignObject>
 
-    <line class="lane-line" :x1="0" :x2="0" :y1="0" :y2="svgHeight" :stroke="lane.color" stroke-width="2" />
+    <line
+      class="lane-line"
+      :x1="0"
+      :x2="0"
+      :y1="0"
+      :y2="svgHeight"
+      :stroke="lane.color"
+      :stroke-width="laneLineStrokeWidth"
+    />
 
     <g class="lane-periods">
-      <rect
+      <g
         v-for="period in lanePeriods"
         :key="period.id"
-        :x="-period.width / 2"
-        :y="period.y"
-        :width="period.width"
-        :height="period.height"
-        :fill="lane.color"
-        fill-opacity="0.18"
-        :stroke="lane.color"
-        stroke-width="1"
-        stroke-opacity="0.6"
-        rx="6"
-      />
+        :transform="`translate(${-period.width / 2 - period.xOffset}, ${period.y})`"
+      >
+        <PeriodShape :period="period" :color="lane.periodColor ?? lane.color" :laneId="lane.id" />
+      </g>
     </g>
 
-    <g v-for="vertex in lane.filters.vertices" :key="vertex.id" class="lane-node" :transform="nodeTranslate(vertex)">
-      <template v-if="vertex.useHtml">
-        <foreignObject
-          :x="-foreignNodeWidth / 2"
-          :y="-foreignNodeHeight / 2 - 12"
-          :width="foreignNodeWidth"
-          :height="foreignNodeHeight"
-        >
-          <div xmlns="http://www.w3.org/1999/xhtml" class="node-foreign">
-            {{ vertex.label || 'Card' }}
-          </div>
-        </foreignObject>
-      </template>
-      <template v-else>
-        <circle :r="nodeRadius" :fill="lane.color" stroke="#000" stroke-width="1" />
-        <circle :r="nodeRadius - 3" fill="#fff" />
-      </template>
+    <g
+      v-for="node in getSortedNodes(lane.filters)"
+      :key="node.id"
+      class="lane-node"
+      :transform="nodeTranslate(node)"
+    >
+      <foreignObject
+        v-if="isEdge(node)"
+        :x="-foreignRelationWidth / 2"
+        :y="-foreignRelationHeight / 2"
+        :width="foreignRelationWidth"
+        :height="foreignRelationHeight"
+      >
+        <div xmlns="http://www.w3.org/1999/xhtml" class="node-foreign">
+          <RelationDetails :edge="node" :color="lane.datePointsColor" />
+        </div>
+      </foreignObject>
+      <foreignObject
+        v-else
+        :x="-laneEntityNodeWidth / 2"
+        :y="-foreignNodeHeight / 2 - 3"
+        :width="foreignNodeWidth"
+        :height="foreignNodeHeight"
+      >
+        <div xmlns="http://www.w3.org/1999/xhtml" class="node-foreign">
+          <EntityNode
+            :laneId="lane.id"
+            :vertexId="node.id"
+            :label="node.label"
+            :backgroundColor="node.backgroundColor"
+            :backgroundImage="node.backgroundImage"
+            :color="lane.datePointsColor"
+          />
+        </div>
+      </foreignObject>
     </g>
   </g>
 </template>
 
 <script setup lang="ts">
-import type { LaneWithLayout, Vertex } from '../composables/useTimelineGeometry'
+import type { Edge, LanePeriod, LaneWithLayout, Vertex } from '@/types'
+import { getSortedNodes, isEdge } from '@/utils/timelineUtils'
+import {
+  foreignNodeHeight,
+  foreignNodeWidth,
+  foreignRelationHeight,
+  foreignRelationWidth,
+  laneEntityNodeWidth,
+  laneLineStrokeWidth,
+  laneTitleHeight,
+  laneTitleWidth,
+  laneTitleXOffset,
+  laneTopOffset,
+} from '@/utils/constants'
+import LaneTitle from './LaneTitle.vue'
+import EntityNode from './EntityNode.vue'
+import PeriodShape from './PeriodShape.vue'
+import RelationDetails from './RelationDetails.vue'
 
 defineProps<{
   lane: LaneWithLayout
-  laneTopOffset: number
   svgHeight: number
-  nodeRadius: number
-  foreignNodeWidth: number
-  foreignNodeHeight: number
-  lanePeriods: { id: string; y: number; height: number; width: number }[]
-  nodeTranslate: (vertex: Vertex) => string
+  lanePeriods: LanePeriod[]
+  nodeTranslate: (node: Vertex | Edge) => string
 }>()
 </script>
 
@@ -68,14 +107,5 @@ defineProps<{
 .node-foreign {
   width: 100%;
   height: 100%;
-  border: 1px solid #999;
-  border-radius: 6px;
-  background: #fffbea;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #333;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 </style>

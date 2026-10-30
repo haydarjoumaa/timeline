@@ -1,0 +1,52 @@
+.form-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: max-content;
+  min-width: 320px;
+  padding: 12px;
+  font-size: 13px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.form-panel .field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-panel .field > span:first-child {
+  min-width: 130px;
+}
+
+.form-panel .error {
+  color: #f56c6c;
+}
+
+.form-panel .actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.form-panel button {
+  padding: 4px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.form-panel button.primary {
+  color: white;
+  background: #2f5597;
+  border: 1px solid #2f5597;
+  border-radius: 3px;
+}
+
+.form-panel .link-button {
+  padding: 0 4px;
+  border: none;
+  background: none;
+}

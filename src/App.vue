@@ -1,14 +1,11 @@
 <template>
   <!-- Top-level layout: toolbar + split left/right panels -->
   <div class="timeline-wrapper">
-    <div class="toolbar">
-      <button @click="addRowInMiddle">Add row in middle</button>
-      <button @click="addLane">Add lane</button>
-    </div>
+    <TimelineToolbar />
 
     <div class="scroll-wrapper">
       <div class="timeline-layout">
-        <LeftPanel :rows="rows" :rowHeight="rowHeight" />
+        <LeftPanel />
 
         <div class="right-panel">
           <div
@@ -17,25 +14,13 @@
             :class="{ 'is-panning': isPanning }"
             @mousedown="startPan"
           >
-            <TimelineSvg
-              :rows="rows"
-              :rowIndexById="rowIndexById"
-              :rowHeight="rowHeight"
-              :laneTopOffset="laneTopOffset"
-              :lanesWithLayout="lanesWithLayout"
-              :svgWidth="svgWidth"
-              :svgHeight="svgHeight"
-              :nodeRadius="nodeRadius"
-              :foreignNodeWidth="foreignNodeWidth"
-              :foreignNodeHeight="foreignNodeHeight"
-              :periods="periods"
-              :periodWidth="periodWidth"
-              @lane-drag="handleLaneDrag"
-            />
+            <TimelineSvg />
           </div>
         </div>
       </div>
     </div>
+
+    <LaneFormModal />
   </div>
 </template>
 
@@ -43,26 +28,11 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import LeftPanel from './components/LeftPanel.vue'
 import TimelineSvg from './components/TimelineSvg.vue'
-import { useTimelineState } from './composables/useTimelineState'
+import TimelineToolbar from './components/TimelineToolbar.vue'
+import LaneFormModal from './components/LaneFormModal.vue'
+import { seedDemoData } from './utils/demoData'
 
-// All state and actions come from the composable to keep this file declarative
-const {
-  rowHeight,
-  laneTopOffset,
-  svgWidth,
-  nodeRadius,
-  foreignNodeWidth,
-  foreignNodeHeight,
-  periodWidth,
-  rows,
-  rowIndexById,
-  lanesWithLayout,
-  svgHeight,
-  periods,
-  addRowInMiddle,
-  addLane,
-  handleLaneDrag,
-} = useTimelineState()
+seedDemoData()
 
 const panContainer = ref<HTMLDivElement | null>(null)
 const isPanning = ref(false)
@@ -73,10 +43,8 @@ const startPan = (event: MouseEvent) => {
   if (!panContainer.value) return
   if (event.button !== 0) return
   const target = event.target as HTMLElement | null
-  // Avoid hijacking lane dragging interactions
+  // Avoid hijacking lane dragging and node interactions
   if (target && target.closest('.lane-group')) return
-  // Skip panning when clicking on period overlays or foreignObject content
-  if (target && target.closest('.global-periods')) return
   if (target && target.closest('.node-foreign')) return
 
   isPanning.value = true
@@ -92,7 +60,6 @@ const handleMouseMove = (event: MouseEvent) => {
 }
 
 const stopPan = () => {
-  if (!isPanning.value) return
   isPanning.value = false
 }
 
@@ -122,20 +89,8 @@ onBeforeUnmount(() => {
     sans-serif;
 }
 
-.toolbar {
-  padding: 4px 0;
-  display: flex;
-  gap: 8px;
-}
-
-.toolbar button {
-  padding: 4px 10px;
-  font-size: 13px;
-  cursor: pointer;
-}
-
 .scroll-wrapper {
-  max-height: 600px;
+  max-height: 85vh;
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -170,19 +125,9 @@ onBeforeUnmount(() => {
   cursor: grabbing;
 }
 
-.pan-container :deep(.global-periods rect),
-.pan-container :deep(.node-foreign),
-.pan-container :deep(.node-foreign *),
 .pan-container :deep(foreignObject),
 .pan-container :deep(.lane-group),
 .pan-container :deep(.lane-group *) {
-  cursor: default;
-}
-
-.pan-container .global-periods rect,
-.pan-container .node-foreign,
-.pan-container .lane-group,
-.pan-container .lane-group * {
   cursor: default;
 }
 </style>
