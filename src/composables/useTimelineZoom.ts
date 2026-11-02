@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTimelineStore } from '@/stores/timeline'
+import { useScopedState } from './useTimelineContext'
 import {
   minZoom,
   zoomStep,
@@ -18,10 +19,11 @@ import {
   leftPanelRowFontSize,
 } from '@/utils/constants'
 
-// Shared across callers so the resize handle and the panel agree on width
-const leftPanelBaseWidthRef = ref(leftPanelBaseWidth)
+// Shared per timeline so the resize handle and the panel agree on width
+const createLeftPanelWidthState = () => ref(leftPanelBaseWidth)
 
 export const useTimelineZoom = () => {
+  const leftPanelBaseWidthRef = useScopedState(createLeftPanelWidthState)
   const store = useTimelineStore()
   const { zoomLevel } = storeToRefs(store)
 

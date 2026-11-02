@@ -1,6 +1,7 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTimelineStore } from '@/stores/timeline'
+import { useTimelineContext } from './useTimelineContext'
 import type { Edge, Lane, RelationInput, Vertex } from '@/types'
 import {
   laneSpacing,
@@ -17,6 +18,7 @@ import entityNodeIcon from '@/assets/entity-node.svg'
  */
 export const useTimelineData = () => {
   const store = useTimelineStore()
+  const { confirm } = useTimelineContext()
   const { lanes, rows, lanePositions, periods, nextRowIndex } = storeToRefs(store)
 
   // Map rowId -> index for quick lookups
@@ -175,7 +177,7 @@ export const useTimelineData = () => {
   const getPeriodById = (id: string) => periods.value.find((p) => p.id === id)
 
   const deleteLane = (laneId: string) => {
-    if (!window.confirm('Are you sure you want to delete this lane?')) return
+    if (!confirm('Are you sure you want to delete this lane?')) return
 
     const laneToDelete = getLane(laneId)
     if (!laneToDelete) return

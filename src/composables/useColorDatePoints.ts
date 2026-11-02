@@ -1,9 +1,11 @@
 import { storeToRefs } from 'pinia'
 import { useTimelineStore } from '@/stores/timeline'
 import { useTimelineData } from './useTimelineData'
+import { useTimelineContext } from './useTimelineContext'
 
 export const useColorDatePoints = () => {
   const store = useTimelineStore()
+  const { onNodeClick } = useTimelineContext()
   const { nodeClickedId, laneClickedId } = storeToRefs(store)
   const { setColorForDatePointForVertex, setColorForDatePointRowNote } = useTimelineData()
 
@@ -15,6 +17,7 @@ export const useColorDatePoints = () => {
     }
     store.setNodeClickedId(vertexId)
     store.setLaneClickedId(laneId)
+    onNodeClick?.({ laneId, vertexId })
   }
 
   const setColorForDatePoint = (color: string): void => {
