@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { useTimelineContext } from '@/composables/useTimelineContext'
 import type { Lane, Period, Row } from '@/types'
 
 interface TimelineState {
@@ -38,17 +39,23 @@ const createInitialState = (): TimelineState => ({
   laneClickedId: '',
 })
 
-export const useTimelineStore = defineStore('timeline', {
-  state: createInitialState,
-  actions: {
-    setZoomLevel(level: number) {
-      this.zoomLevel = level
+// Each timeline instance gets its own store id so instances never share state
+export const createTimelineStore = (id: string) =>
+  defineStore(id, {
+    state: createInitialState,
+    actions: {
+      setZoomLevel(level: number) {
+        this.zoomLevel = level
+      },
+      setNodeClickedId(id: string) {
+        this.nodeClickedId = id
+      },
+      setLaneClickedId(id: string) {
+        this.laneClickedId = id
+      },
     },
-    setNodeClickedId(id: string) {
-      this.nodeClickedId = id
-    },
-    setLaneClickedId(id: string) {
-      this.laneClickedId = id
-    },
-  },
-})
+  })
+
+export type TimelineStore = ReturnType<ReturnType<typeof createTimelineStore>>
+
+export const useTimelineStore = (): TimelineStore => useTimelineContext().store

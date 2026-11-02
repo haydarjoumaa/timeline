@@ -84,3 +84,11 @@ export type LanePeriod = {
 }
 
 export type Grouped = { date: string; items: Row[] }
+
+// Everything a timeline displays; what <Timeline v-model:data> reads and emits
+export type TimelineData = {
+  lanes: Lane[]
+  rows: Row[]
+  periods: Period[]
+  lanePositions?: Record<string, number>
+}

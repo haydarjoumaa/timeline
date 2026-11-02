@@ -6,29 +6,41 @@ import {
   rowLineHoverBackgroundColor,
 } from '@/utils/constants'
 import { useTimelineData } from './useTimelineData'
-
-// Form state is module-level so the toolbar form, row lines and period shapes share it
-const allowHovering = ref(false)
-const hoveredRow = ref<string | null>(null)
-const selectPeriodType = ref<PeriodType | null>(null)
-const visible = ref(false)
-const editingPeriodId = ref<string | null>(null)
-const errorMessage = ref('')
+import { useScopedState, useTimelineContext } from './useTimelineContext'
 
 const emptyRowIds = (): PeriodRow['periodRowId'] => ({
   periodStartDatePoint: { id: '', date: '' },
   periodEndDatePoint: { id: '', date: '' },
 })
 
-const periodForm = reactive<PeriodRow>({
-  laneId: '',
-  periodStart: 'periodStartDatePoint',
-  periodEnd: 'periodEndDatePoint',
-  periodAnnotation: '',
-  periodRowId: emptyRowIds(),
+// Form state is shared per timeline so the toolbar form, row lines and period shapes agree
+const createPeriodFormState = () => ({
+  allowHovering: ref(false),
+  hoveredRow: ref<string | null>(null),
+  selectPeriodType: ref<PeriodType | null>(null),
+  visible: ref(false),
+  editingPeriodId: ref<string | null>(null),
+  errorMessage: ref(''),
+  periodForm: reactive<PeriodRow>({
+    laneId: '',
+    periodStart: 'periodStartDatePoint',
+    periodEnd: 'periodEndDatePoint',
+    periodAnnotation: '',
+    periodRowId: emptyRowIds(),
+  }),
 })
 
 export const usePeriodForm = () => {
+  const {
+    allowHovering,
+    hoveredRow,
+    selectPeriodType,
+    visible,
+    editingPeriodId,
+    errorMessage,
+    periodForm,
+  } = useScopedState(createPeriodFormState)
+  const { confirm } = useTimelineContext()
   const { periods, getPeriodById, findVertexById, getPeriodColor, getLaneVertices } =
     useTimelineData()
 
@@ -137,7 +149,7 @@ export const usePeriodForm = () => {
   }
 
   const deletePeriod = (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this period?')) return
+    if (!confirm('Are you sure you want to delete this period?')) return
     periods.value = periods.value.filter((p) => p.id !== id)
   }
 

@@ -3,22 +3,27 @@ import type { Lane } from '@/types'
 import { laneSpacing } from '@/utils/constants'
 import { generateId } from '@/utils/timelineUtils'
 import { useTimelineData } from './useTimelineData'
+import { useScopedState } from './useTimelineContext'
 
 type LaneForm = { name: string; laneColor: string; datePointsColor: string; periodColor: string }
 
 const defaultLaneColor = '#2F5597'
 
-const laneForm = reactive<LaneForm>({
-  name: '',
-  laneColor: defaultLaneColor,
-  datePointsColor: defaultLaneColor,
-  periodColor: defaultLaneColor,
+const createLaneFormState = () => ({
+  laneForm: reactive<LaneForm>({
+    name: '',
+    laneColor: defaultLaneColor,
+    datePointsColor: defaultLaneColor,
+    periodColor: defaultLaneColor,
+  }),
+  isLaneModalOpen: ref(false),
+  editingLaneId: ref<string | null>(null),
+  laneFormError: ref(''),
 })
-const isLaneModalOpen = ref(false)
-const editingLaneId = ref<string | null>(null)
-const laneFormError = ref('')
 
 export const useLaneForm = () => {
+  const { laneForm, isLaneModalOpen, editingLaneId, laneFormError } =
+    useScopedState(createLaneFormState)
   const { lanesWithLayout, lanes, lanePositions } = useTimelineData()
 
   const resetForm = () => {
